@@ -214,6 +214,68 @@
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok, () => {});
   }));
 
+  /* ---------- Tarjetas de repaso (tipo Anki) ----------
+     Orden aleatorio en cada visita; las tarjetas marcadas “Repasar”
+     o nunca vistas salen antes que las que ya sabías. */
+  const known = store.get("ag-cards", {});
+  const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+  $$(".module[data-step]").forEach(mod => {
+    const cards = (window.FLASHCARDS || {})[mod.id];
+    if (!cards || !cards.length) return;
+    const ids = cards.map((_, i) => mod.id + "-" + i);
+    const pending = shuffle(ids.filter(id => !known[id]));
+    const learned = shuffle(ids.filter(id => known[id]));
+    let queue = pending.concat(learned);
+    let flipped = false;
+
+    const box = document.createElement("div");
+    box.className = "flash";
+    box.innerHTML =
+      "<div class='flash-head'><b>🃏 Tarjetas de repaso</b><span class='flash-meta'></span></div>" +
+      "<button class='flash-card' type='button' aria-label='Voltear la tarjeta'><div class='flash-inner'>" +
+      "<div class='face front'><small class='flash-type'></small><p class='flash-q'></p><span class='flash-hint'>Toca para ver la respuesta</span></div>" +
+      "<div class='face back' aria-live='polite'><small>Respuesta</small><p class='flash-a'></p></div>" +
+      "</div></button>" +
+      "<div class='flash-actions'>" +
+      "<button class='btn small flash-skip' type='button'>Otra tarjeta ↻</button>" +
+      "<button class='btn small flash-again' type='button'>😕 Repasar</button>" +
+      "<button class='btn small primary flash-ok' type='button'>✅ La sabía</button>" +
+      "</div>";
+    mod.insertBefore(box, $(".module-foot", mod));
+
+    const card = $(".flash-card", box);
+    function render() {
+      const id = queue[0];
+      const c = cards[ids.indexOf(id)];
+      flipped = false;
+      card.classList.remove("flipped");
+      $(".flash-type", box).textContent = c.tipo;
+      $(".flash-q", box).textContent = c.q;
+      $(".flash-a", box).textContent = c.a;
+      const n = ids.filter(x => known[x]).length;
+      $(".flash-meta", box).textContent = "Dominadas " + n + "/" + ids.length;
+      box.classList.toggle("is-flipped", false);
+    }
+    function flip() {
+      flipped = !flipped;
+      card.classList.toggle("flipped", flipped);
+      box.classList.toggle("is-flipped", flipped);
+    }
+    function next(mark) {
+      const id = queue.shift();
+      if (mark === "ok") { known[id] = 1; queue.push(id); }
+      else if (mark === "again") { delete known[id]; queue.splice(Math.min(2, queue.length), 0, id); }
+      else queue.push(id);
+      store.set("ag-cards", known);
+      render();
+    }
+    card.addEventListener("click", flip);
+    $(".flash-skip", box).addEventListener("click", () => next());
+    $(".flash-again", box).addEventListener("click", () => next("again"));
+    $(".flash-ok", box).addEventListener("click", () => next("ok"));
+    render();
+  });
+
   /* ---------- Glosario ---------- */
   const search = $("#gloss-search");
   if (search) search.addEventListener("input", () => {

@@ -2,7 +2,7 @@
 Mejorar con confianza tus flujos de trabajo usando la tecnología adecuada; implementando potentes agentes donde se necesita inteligencia real y adaptación.
 
 > 🌐 **Versión web interactiva, paso a paso:** https://javierdataanalyst.github.io/Agentes-de-IA/
-> Incluye un simulador del ciclo TAO, un asistente para decidir si necesitas un agente y ejercicios. Es una guía educativa: explica cómo funcionan los agentes, no es un tutorial para desplegarlos.
+> Incluye un simulador del ciclo TAO, un asistente para decidir si necesitas un agente, ejercicios y 74 tarjetas de repaso tipo Anki que cambian en cada visita. Es una guía educativa: explica cómo funcionan los agentes, no es un tutorial para desplegarlos.
 
 ---
 

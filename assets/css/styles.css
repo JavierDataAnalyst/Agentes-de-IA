@@ -262,6 +262,30 @@ td.num { text-align: center; font-weight: 700; }
 .tao-controls { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .tao-controls .count { font-size: 13px; color: var(--muted); margin-left: auto; }
 
+/* Tarjetas de repaso */
+.flash { margin: 32px 0 8px; padding: 18px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); }
+.flash-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 15px; }
+.flash-meta { font-size: 13px; color: var(--muted); }
+.flash-card { display: block; width: 100%; padding: 0; border: none; background: none; text-align: left; perspective: 1200px; }
+.flash-inner { display: grid; transition: transform .5s; transform-style: preserve-3d; }
+.flash-card.flipped .flash-inner { transform: rotateY(180deg); }
+.face {
+  grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  min-height: 150px; padding: 20px 22px; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px;
+}
+.face small { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--accent-text); }
+.face p { margin: 0; font-size: 1.05rem; font-weight: 600; line-height: 1.5; }
+.face.back { transform: rotateY(180deg); border-color: var(--accent); }
+.face.back p { font-weight: 500; }
+.face.back small { color: var(--ok); }
+.flash-hint { margin-top: auto; font-size: 13px; color: var(--muted); }
+.flash-card:hover .face.front { border-color: var(--accent); }
+.flash-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.flash-again, .flash-ok { display: none; }
+.flash.is-flipped .flash-again, .flash.is-flipped .flash-ok { display: inline-flex; }
+.flash.is-flipped .flash-skip { margin-right: auto; }
+
 /* Pasos de construcción */
 .build-steps { counter-reset: b; display: grid; gap: 12px; margin: 20px 0; padding: 0; list-style: none; }
 .build-steps li {
