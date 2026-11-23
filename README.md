@@ -5,16 +5,37 @@ Mejorar con confianza tus flujos de trabajo usando la tecnología adecuada; impl
 
 ## Contenido
 
+**Parte I · Fundamentos**
 1. [¿Qué es un agente de IA?](#1-qué-es-un-agente-de-ia)
 2. [Ejemplo: un agente de viajes](#2-ejemplo-un-agente-de-viajes)
 3. [¿En qué se diferencia de automatizar con un prompt?](#3-en-qué-se-diferencia-de-automatizar-con-un-prompt)
 4. [Niveles de agencia](#4-niveles-de-agencia)
 5. [¿Qué hace que un agente sea un agente? La trinidad](#5-qué-hace-que-un-agente-sea-un-agente-la-trinidad)
+
+**Parte II · Decidir: dónde sí y dónde no**
+
 6. [¿Cuándo adoptar un agente y cuándo no?](#6-cuándo-adoptar-un-agente-y-cuándo-no)
 7. [El ecosistema: comprar o construir](#7-el-ecosistema-comprar-o-construir)
-8. [Referencias](#referencias)
+
+**Parte III · Cómo funciona por dentro**
+
+8. [Arquitectura: la capa de orquestación](#8-arquitectura-la-capa-de-orquestación)
+9. [El ciclo Pensamiento-Acción-Observación (TAO)](#9-el-ciclo-pensamiento-acción-observación-tao)
+10. [Tipos de pensamiento](#10-tipos-de-pensamiento)
+11. [El marco de prompts ReAct](#11-el-marco-de-prompts-react)
+12. [Herramientas: APIs, funciones y almacenes de datos](#12-herramientas-apis-funciones-y-almacenes-de-datos)
+13. [Sistemas multiagente](#13-sistemas-multiagente)
+
+**Parte IV · De la teoría a la práctica**
+
+14. [Buenas prácticas y errores comunes](#14-buenas-prácticas-y-errores-comunes)
+15. [Glosario](#15-glosario)
+
+[Referencias](#referencias)
 
 ---
+
+# Parte I · Fundamentos
 
 ## 1. ¿Qué es un agente de IA?
 
@@ -57,7 +78,7 @@ Así razona y actúa, paso a paso:
 | 4 | 520 + 840 = 1.360 USD, dentro del presupuesto. Pido confirmación antes de pagar. | — | El usuario aprueba. |
 | 5 | Reservo y termino. | `reservar(vuelo, hotel)` | Confirmaciones recibidas. ✅ Objetivo cumplido. |
 
-Lo importante no es cada respuesta aislada, sino el **ciclo**: el agente interpreta, decide qué herramienta usar, mira el resultado y ajusta su plan hasta lograr el objetivo.
+Lo importante no es cada respuesta aislada, sino el **ciclo**: el agente interpreta, decide qué herramienta usar, mira el resultado y ajusta su plan hasta lograr el objetivo. (Ese ciclo tiene nombre: lo vemos en la [sección 9](#9-el-ciclo-pensamiento-acción-observación-tao)).
 
 ---
 
@@ -72,6 +93,8 @@ Lo importante no es cada respuesta aislada, sino el **ciclo**: el agente interpr
 | **Ejemplo** | "Resume este correo y guárdalo en una hoja". | "Resuelve el reclamo de este cliente". |
 
 Un flujo con prompt **ejecuta** una receta; un agente **decide** la receta.
+
+> 🍳 **Analogía:** un flujo automatizado es una máquina de café: aprietas un botón y siempre sale lo mismo. Un agente es un cocinero: le dices "algo ligero sin gluten", revisa la nevera, improvisa con lo que hay y te pregunta si te falta algo.
 
 ---
 
@@ -92,6 +115,8 @@ flowchart LR
 ```
 
 > A mayor nivel, más capacidad… y también más necesidad de control, monitoreo y límites claros.
+
+> 🚗 **Analogía:** es como la conducción asistida. Nivel 0 es un auto sin ayudas; nivel 1, el que te avisa si te sales del carril; nivel 2, el control de crucero que frena solo; nivel 3, el que te lleva de A a B mientras tú supervisas.
 
 ---
 
@@ -131,20 +156,17 @@ Gestiona el ciclo de toma de decisiones del agente:
 3. **Decide** qué hacer: usar otra herramienta, preguntar al usuario o terminar.
 4. **Registra** todo lo que se ha hecho, para no repetir pasos y saber qué falta.
 
-Este ciclo **continúa hasta que la tarea se completa**. La orquestación controla la secuencia de acciones y lo que viene después; por ejemplo, decide *cuándo* buscar vuelos o reservar hotel según el avance de la planificación.
-
-```mermaid
-flowchart LR
-    A["Recibir"] --> B["Pensar"] --> C["Decidir"] --> D["Actuar"] --> E["Registrar"]
-    E -- "¿Tarea completa?<br/>No" --> A
-    E -- "Sí" --> F(["Responder al usuario"])
-```
+Este ciclo **continúa hasta que la tarea se completa**. La orquestación controla la secuencia de acciones y lo que viene después; por ejemplo, decide *cuándo* buscar vuelos o reservar hotel según el avance de la planificación. Lo detallamos en la [Parte III](#parte-iii--cómo-funciona-por-dentro).
 
 ---
 
+# Parte II · Decidir: dónde sí y dónde no
+
+> 💰 Un agente cuesta más que un chatbot: más llamadas al modelo, más integraciones, más pruebas y más supervisión. Elegir bien **dónde** usarlo es la forma más directa de **optimizar el presupuesto** de una iniciativa de IA: cada caso de negocio se une con el enfoque adecuado, ni más ni menos.
+
 ## 6. ¿Cuándo adoptar un agente y cuándo no?
 
-Imagina dos equipos de *call center*:
+### Un ejemplo: dos call centers
 
 | | Call center A | Call center B |
 |---|---|---|
@@ -155,7 +177,17 @@ Imagina dos equipos de *call center*:
 | **Atención** | Estandarizada. | Personalizada. |
 | **Solución adecuada** | ✅ Un **chatbot sencillo** o preguntas frecuentes. | ✅ Un **agente** con acceso a la base de datos del cliente y herramientas para investigar y resolver. |
 
+### Criterios: razones válidas y no válidas
+
+| ✅ Razones válidas para usar un agente | ❌ Razones que **no** justifican un agente |
+|---|---|
+| El problema requiere procesar **datos no estructurados**: texto, video, imágenes, correos, PDFs. | "Queremos parecer innovadores y vanguardistas." |
+| El problema requiere **decisiones complejas** con varios factores a la vez. | "Nuestra competencia ya usa un agente para esto." |
+| El problema requiere una **respuesta única y contextualizada** para cada caso. | "La tarea se ejecuta más rápido con automatización." → eso pide automatización tradicional, no un agente. |
+
 **Regla práctica:** si el problema se resuelve con un árbol de decisiones conocido, un agente es sobreingeniería. El agente se justifica cuando hay **contexto que consultar, pasos que no se pueden prever y decisiones que dependen de cada caso**.
+
+> 🏥 **Analogía:** no mandas a un médico especialista a tomar la temperatura de todos los pacientes en la entrada; para eso basta un termómetro. El especialista se reserva para los casos que necesitan diagnóstico.
 
 ---
 
@@ -172,13 +204,306 @@ El ecosistema de agentes es muy variado y cambia cada día. A grandes rasgos hay
 | | | Necesitas integrarte rápido con los sistemas existentes. | Ninguna solución existente cumple los requisitos especializados. |
 | **Complejidad** | Baja | Media | Alta: se construye desde cero |
 
+### El marco aplicado a casos de negocio
+
+| Caso | Enfoque | Por qué |
+|---|---|---|
+| Asistente de programación que ayuda al equipo de ingeniería a escribir y depurar código más rápido. | 🛒 Herramienta estándar | Dominio específico con soluciones maduras en el mercado. |
+| Herramienta de investigación profunda para que los analistas detecten tendencias y noticias. | 🛒 Herramienta estándar | Ya existe y está probada; construirla no da ventaja. |
+| Bot para que Recursos Humanos inscriba a los empleados en los beneficios que elijan. | 🧩 Low-code | Flujo con patrón común, necesita integrarse rápido con el sistema de RR. HH. y que el propio equipo lo ajuste. |
+| Agente de *trading* por cuenta propia que ejecuta operaciones de alta frecuencia. | 🛠️ Framework (construir) | Sistemas propios, datos confidenciales y es la ventaja competitiva del negocio. |
+| Bot que asesora a los clientes según su historial financiero dentro de la app del banco. | 🛠️ Framework (construir) | Datos sensibles, regulación y requisitos que ninguna herramienta genérica cubre. |
+
 ```mermaid
 flowchart TD
-    Q1{"¿Existe una herramienta madura<br/>para este caso?"} -- Sí --> R1["🛒 Comprar / usar la herramienta"]
+    Q0{"¿Pasa los criterios<br/>de la sección 6?"} -- No --> R0["🤖 Chatbot o automatización tradicional"]
+    Q0 -- Sí --> Q1{"¿Existe una herramienta madura<br/>para este caso?"}
+    Q1 -- Sí --> R1["🛒 Comprar / usar la herramienta"]
     Q1 -- No --> Q2{"¿Sistemas propios, datos confidenciales<br/>o requisitos muy especializados?"}
     Q2 -- No --> R2["🧩 Plataforma low-code"]
     Q2 -- Sí --> R3["🛠️ Construir con un framework"]
 ```
+
+> 🏠 **Analogía:** es como conseguir vivienda. Puedes arrendar un apartamento amoblado (herramienta lista), comprar una casa prefabricada y adaptarla (low-code) o diseñar y construir la tuya (framework). Construir solo vale la pena si tus necesidades son realmente únicas.
+
+---
+
+# Parte III · Cómo funciona por dentro
+
+## 8. Arquitectura: la capa de orquestación
+
+Recordemos que un agente está compuesto por:
+
+- **El modelo** — razona.
+- **Las herramientas** — trabajan con el mundo exterior.
+- **La orquestación** — un **bucle continuo** que controla cómo el agente procesa la información, la retiene y toma decisiones.
+
+Dentro de la capa de orquestación viven tres elementos que mantienen el **estado** del agente:
+
+```mermaid
+flowchart LR
+    subgraph O["Capa de orquestación"]
+        direction TB
+        subgraph E["Estado del agente"]
+            direction LR
+            R["🧭 Razonamiento y<br/>planificación"]
+            MEM["🗂️ Memoria<br/>corto y largo plazo"]
+            I["📋 Instrucciones"]
+        end
+        M["🧠 Modelo"] <--> H["🦾 Herramientas"]
+    end
+    H <--> W(("🌍 Mundo exterior"))
+```
+
+| Componente | Qué es | Analogía: un jefe de proyecto |
+|---|---|---|
+| **Razonamiento y planificación** | Cómo el modelo descompone el objetivo en pasos y decide el siguiente. | Su plan de trabajo y su criterio para priorizar. |
+| **Memoria a corto plazo** | Lo que pasó en *esta* tarea: mensajes, resultados de herramientas, pasos dados. Suele vivir en la ventana de contexto. | La libreta donde anota lo de la reunión de hoy. |
+| **Memoria a largo plazo** | Lo que persiste entre tareas: preferencias del usuario, casos anteriores, conocimiento de la empresa (bases de datos, documentos, búsqueda semántica). | El archivo de la empresa y su experiencia acumulada. |
+| **Instrucciones** | El rol, las reglas, los límites y el tono definidos por quien construye el agente (*system prompt*). | El manual de procedimientos y la descripción de su cargo. |
+
+> Sin memoria, el agente repetiría pasos o se le olvidaría lo que el cliente dijo hace dos mensajes. Sin instrucciones, haría cosas "razonables" pero fuera de la política de la empresa.
+
+---
+
+## 9. El ciclo Pensamiento-Acción-Observación (TAO)
+
+La arquitectura más sencilla de un agente es un ciclo de tres pasos (*Thought – Action – Observation*):
+
+| Paso | Qué pasa |
+|---|---|
+| 💭 **Pensamiento** | El modelo decide el siguiente paso en función del prompt del usuario y de lo que ya sabe. |
+| ⚡ **Acción** | El agente ejecuta una acción con las herramientas que tiene a su disposición. |
+| 👀 **Observación** | El modelo reflexiona sobre la respuesta de la herramienta. Eso alimenta el siguiente pensamiento. |
+
+```mermaid
+flowchart LR
+    T(("💭 Pensamiento")) --> A(("⚡ Acción")) --> O(("👀 Observación")) --> T
+    O -.->|"¿Objetivo cumplido?"| F(["✅ Respuesta final"])
+```
+
+El TAO es el **método de resolución de problemas** del agente: un ciclo continuo en el que **cada observación da lugar al siguiente pensamiento**. Una solicitud compleja puede pasar por varios ciclos, y en cada uno el agente piensa, actúa y observa antes de seguir.
+
+> 🔍 **Analogía:** un detective. Piensa una hipótesis ("el culpable entró por la ventana"), actúa (revisa la ventana), observa (no hay huellas) y con eso replantea la siguiente hipótesis. No escribe el informe final antes de revisar las pistas.
+
+### Ejemplo 1: reembolso por renovación accidental
+
+*El cliente escribe: "Se me renovó la suscripción premium sin querer, quiero mi dinero de vuelta."*
+
+| Ciclo | 💭 Pensamiento | ⚡ Acción | 👀 Observación |
+|:---:|---|---|---|
+| 1 | "Debo entender la situación del cliente. Reviso su cuenta." | Consultar la base de datos de clientes y el historial de suscripciones. | Plan premium, renovado hace 3 días por 99 USD. |
+| 2 | "La renovación es reciente. ¿Qué dice la política sobre renovaciones accidentales?" | Consultar la base de políticas de la empresa. | Reembolso completo si se pide dentro de 7 días. |
+| 3 | "Cumple los requisitos. Tramito el reembolso." | Iniciar el reembolso en el sistema de pagos. | Reembolso de 99 USD procesado. |
+| 4 | "Listo. Informo al cliente y cancelo la renovación para que no se repita." | Enviar correo de confirmación y actualizar el estado de la suscripción. | Correo enviado, suscripción cancelada. ✅ |
+
+### Ejemplo 2: reserva de restaurante con requisitos especiales
+
+*El cliente escribe: "Mesa para 6 mañana a las 7 p. m., en un sitio tranquilo; mi mamá usa silla de ruedas y es su cumpleaños."*
+
+| Ciclo | 💭 Pensamiento | ⚡ Acción | 👀 Observación |
+|:---:|---|---|---|
+| 1 | "Primero, ¿qué mesas hay mañana a las 7 p. m.?" | Consultar capacidad para 6 en el sistema de reservas. | Disponibles: mesa 12 (bar), mesa 5 (rincón tranquilo), mesa 8 (segundo piso). |
+| 2 | "¿Cuáles son accesibles para silla de ruedas?" | Revisar las características de accesibilidad. | Solo la 5 es accesible; la 8 tiene escaleras y la 12, escalones. |
+| 3 | "La 5 es accesible **y** tranquila. La reservo." | Reservar la mesa 5 para 6 personas con nota de accesibilidad. | Reserva confirmada: R-7891. |
+| 4 | "Falta la torta de cumpleaños." | Pedir la torta a la pastelería. | Torta de chocolate con "Feliz cumpleaños, mamá" lista a las 6:30 p. m. |
+| 5 | "Todo listo. Confirmo los detalles con el cliente." | Enviar mensaje de confirmación completo. | El cliente recibe: mesa 5 (tranquila, accesible), mañana 7 p. m., torta encargada. ✅ |
+
+Fíjate en el ciclo 2: la observación del ciclo 1 (tres mesas) no bastaba; el agente **se dio cuenta** de que faltaba un requisito y lo verificó antes de reservar. Eso es lo que un flujo fijo no hace.
+
+---
+
+## 10. Tipos de pensamiento
+
+No todos los "pensamientos" del ciclo son iguales. Según el momento, el modelo hace distintos tipos de razonamiento:
+
+| Tipo | Qué hace | Ejemplo (reserva del restaurante) |
+|---|---|---|
+| **Planificación** | Divide el objetivo en pasos. | "Primero disponibilidad, luego accesibilidad, luego la torta." |
+| **Análisis** | Interpreta los datos que recibió. | "Hay tres mesas, pero dos tienen escaleras o escalones." |
+| **Toma de decisiones** | Elige entre opciones. | "Me quedo con la mesa 5." |
+| **Solución de problemas** | Busca alternativa cuando algo falla. | "Si no hubiera mesa accesible a las 7, ofrezco las 8 p. m." |
+| **Integración de memoria** | Usa lo que ya sabe del usuario o de la conversación. | "Dijo que quería un sitio tranquilo: el rincón encaja." |
+| **Autorreflexión** | Revisa su propio trabajo. | "¿Confirmé la torta antes de avisar al cliente? Sí." |
+| **Establecimiento de objetivos** | Define qué significa "terminado". | "Termino cuando haya mesa, torta y el cliente esté informado." |
+| **Priorización** | Ordena qué va primero. | "La accesibilidad es requisito; la zona tranquila es preferencia." |
+
+---
+
+## 11. El marco de prompts ReAct
+
+**ReAct** = **Re**asoning + **Act**ing (razonar y actuar). Es una forma de escribir el prompt para que el modelo **alterne explícitamente** entre pensar y actuar, siguiendo el ciclo TAO, en lugar de responder de una sola vez.
+
+- Solo razonar (*chain of thought*) → el modelo puede pensar bien, pero con datos inventados o desactualizados.
+- Solo actuar → el modelo llama herramientas sin un plan claro.
+- **ReAct** → cada acción está justificada por un pensamiento y cada pensamiento se apoya en una observación real.
+
+Un prompt ReAct tiene tres partes: la **tarea**, el **formato** que debe seguir y un **ejemplo**:
+
+```text
+Calcula el costo total si compro 3 portátiles de 899 USD cada uno,
+con 15 % de descuento y 8 % de impuesto. Piensa paso a paso.
+
+Sigue este formato:
+
+Pensamiento: [qué hay que calcular primero]
+Acción: [el cálculo]
+Observación: [el resultado]
+...repite lo necesario...
+Respuesta final: [la solución completa]
+
+Ejemplo:
+Pensamiento: calculo primero el costo base
+Acción: 2 × 50 = 100
+Pensamiento: aplico el 10 % de descuento
+Acción: 100 − (100 × 0,10) = 90
+Respuesta final: el total es 90
+```
+
+Respuesta esperada del modelo:
+
+```text
+Pensamiento: calculo el costo base
+Acción: 3 × 899 = 2.697
+Observación: 2.697 USD
+Pensamiento: aplico el 15 % de descuento
+Acción: 2.697 − (2.697 × 0,15) = 2.292,45
+Observación: 2.292,45 USD
+Pensamiento: sumo el 8 % de impuesto sobre el precio con descuento
+Acción: 2.292,45 × 1,08 = 2.475,846
+Observación: 2.475,85 USD
+Respuesta final: el total es 2.475,85 USD
+```
+
+> En un agente real, la "Acción" no es un cálculo escrito por el modelo, sino una **llamada a una herramienta** (una calculadora, una API, una consulta SQL), y la "Observación" es lo que esa herramienta devuelve.
+
+---
+
+## 12. Herramientas: APIs, funciones y almacenes de datos
+
+Las herramientas son las "manos" del agente. Hay tres grandes familias:
+
+### 🔌 APIs (interfaz de programación de aplicaciones)
+
+Una API es el intermediario que permite a un programa pedirle algo a otro sistema y recibir una respuesta, sin saber cómo funciona por dentro.
+
+```mermaid
+flowchart LR
+    C["💻 Aplicación"] -- "Solicitud" --> API["API"] -- "Solicitud" --> DB[("Base de datos")]
+    DB -- "Respuesta" --> API -- "Respuesta" --> C
+```
+
+> 🍽️ **Analogía:** en un restaurante, tú (la aplicación) no entras a la cocina (la base de datos). Le haces el pedido al **mesero** (la API), él lo lleva a la cocina y te trae la comida. Solo puedes pedir lo que está en el menú: esa es la "documentación" de la API.
+
+Ejemplos: la API de un sistema de reservas, de pagos, del clima o de un CRM.
+
+### 🧰 Funciones (skills o herramientas personalizadas)
+
+Código propio que el agente puede invocar: `calcular_cuota()`, `validar_documento()`, `generar_reporte_pdf()`. Encapsulan lógica de negocio que quieres que se ejecute **siempre igual**, sin que el modelo la improvise. Cada función se describe con un nombre, una explicación de para qué sirve y sus parámetros: **esa descripción es lo que el modelo lee para decidir cuándo usarla**, así que debe ser clara.
+
+### 🗄️ Almacenes de datos
+
+| Tipo | Qué guardan | Cómo los usa el agente |
+|---|---|---|
+| **Estructurados** | Tablas: clientes, pedidos, pagos (SQL, hojas de cálculo). | Consultas precisas: "¿cuánto debe el cliente 123?" |
+| **No estructurados** | Documentos, correos, PDFs, transcripciones, imágenes. | Búsqueda por significado (búsqueda semántica / RAG): "¿qué dice la política sobre reembolsos?" |
+
+> 🧑‍🔧 **Analogía de conjunto:** las APIs son los teléfonos para llamar a otros departamentos, las funciones son las herramientas del taller propio y los almacenes de datos son el archivo y la biblioteca de la empresa.
+
+---
+
+## 13. Sistemas multiagente
+
+Cuando los flujos de trabajo se vuelven muy complejos —muchas categorías de casos, muchas herramientas, instrucciones que se contradicen— **un solo agente empieza a fallar**: se confunde de herramienta, mezcla reglas o se llena su memoria de corto plazo. La solución es dividir el trabajo entre **varios agentes especializados**.
+
+> 🏢 **Analogía:** una empresa pequeña la puede llevar una persona que hace de todo. Cuando crece, se crean áreas: ventas, cobranza, soporte. Cada una sabe hacer bien lo suyo.
+
+Hay dos patrones de diseño principales:
+
+### Patrón de gestión (*manager*)
+
+Un **agente gestor** recibe el pedido, delega subtareas a agentes especializados, recoge sus resultados y **él mismo** responde al usuario.
+
+```mermaid
+flowchart LR
+    P(["Prompt"]) --> G["🧑‍💼 Gestor"]
+    G <--> A1["Agente especialista 1"]
+    G <--> A2["Agente especialista 2"]
+    G --> R(["Respuesta"])
+```
+
+> 👨‍🍳 **Analogía:** el chef ejecutivo. Recibe la comanda, le pide la entrada a un cocinero y el postre a otro, revisa los platos y los entrega él.
+
+### Patrón descentralizado (*handoff*)
+
+Un **agente de triaje** clasifica el pedido y lo **traspasa** al agente adecuado, que toma el control y responde directamente al usuario.
+
+```mermaid
+flowchart LR
+    P(["Prompt"]) --> T["🔀 Triaje"]
+    T -- "Traspaso" --> A1["Agente especialista 1"]
+    T -- "Traspaso" --> A2["Agente especialista 2"]
+    A2 --> R(["Respuesta"])
+```
+
+> 🏥 **Analogía:** la recepción de urgencias. La enfermera de triaje te evalúa y te envía al especialista; desde ahí, es el especialista quien te atiende.
+
+| | Gestión | Descentralizado |
+|---|---|---|
+| **Quién responde** | Siempre el gestor. | El agente que recibió el traspaso. |
+| **Control** | Centralizado; fácil de supervisar. | Distribuido; cada agente es dueño de su parte. |
+| **Ideal para** | Tareas que combinan resultados de varios especialistas (p. ej., un informe con datos de ventas y de cobranza). | Solicitudes que pertenecen claramente a un área (p. ej., soporte técnico vs. facturación). |
+| **Riesgo** | El gestor se vuelve cuello de botella. | Un mal triaje manda al cliente al especialista equivocado. |
+
+---
+
+# Parte IV · De la teoría a la práctica
+
+## 14. Buenas prácticas y errores comunes
+
+Lo que he aprendido sobre construir agentes que funcionen fuera de la demo:
+
+### ✅ Buenas prácticas
+
+1. **Empieza simple.** Primero un prompt; si no basta, un flujo; si no basta, un agente con pocas herramientas; y solo al final, multiagente.
+2. **Humano en el circuito** para acciones irreversibles o costosas: pagar, enviar, borrar, reembolsar. El agente propone; una persona aprueba.
+3. **Permisos mínimos.** Dale a cada agente solo las herramientas y datos que necesita para su tarea.
+4. **Límites al ciclo.** Un número máximo de iteraciones, de tiempo y de costo, para que no quede dando vueltas.
+5. **Herramientas bien descritas.** Nombres claros, descripciones precisas y respuestas con errores entendibles ("cliente no encontrado", no un código críptico).
+6. **Trazabilidad.** Registrar cada pensamiento, acción y observación: sin eso no se puede depurar ni auditar.
+7. **Evaluar con casos reales.** Un conjunto de casos de prueba (fáciles, difíciles y maliciosos) que se corre antes de cada cambio.
+
+### ⚠️ Errores comunes
+
+| Error | Cómo se ve | Cómo prevenirlo |
+|---|---|---|
+| **Bucles infinitos** | El agente repite la misma búsqueda una y otra vez. | Límite de iteraciones y memoria de lo ya intentado. |
+| **Alucinar datos** | Responde con un dato que ninguna herramienta le dio. | Instrucción explícita: "si no lo encuentras, dilo"; citar la fuente. |
+| **Herramienta equivocada** | Usa `cancelar_pedido` cuando debía `consultar_pedido`. | Descripciones claras y pocas herramientas por agente. |
+| **Contexto saturado** | En conversaciones largas olvida lo del inicio. | Resumir la memoria de corto plazo; mover lo importante a largo plazo. |
+| **Inyección de instrucciones** | Un correo o documento que el agente lee contiene "ignora tus reglas y…". | Tratar todo contenido externo como datos, nunca como órdenes; permisos mínimos. |
+| **Agente donde no hacía falta** | Costo alto para algo que resolvía un FAQ. | Volver a los criterios de la [sección 6](#6-cuándo-adoptar-un-agente-y-cuándo-no). |
+
+---
+
+## 15. Glosario
+
+| Término | Significado |
+|---|---|
+| **Agente** | Sistema que usa un modelo de IA y herramientas para alcanzar un objetivo con cierta autonomía. |
+| **Agencia** | Grado de autonomía para decidir y actuar. |
+| **Orquestación** | Bucle que controla el ciclo de decisión, la memoria y la secuencia de acciones. |
+| **TAO** | Ciclo Pensamiento → Acción → Observación (*Thought – Action – Observation*). |
+| **ReAct** | Marco de prompts que alterna razonamiento y acción. |
+| **Herramienta** | Capacidad externa que el agente puede invocar (API, función, consulta a datos). |
+| **API** | Interfaz que permite a un sistema pedir algo a otro y recibir respuesta. |
+| **RAG** | *Retrieval-Augmented Generation*: buscar información relevante en documentos y dársela al modelo antes de responder. |
+| **Memoria a corto plazo** | Lo ocurrido en la tarea actual (ventana de contexto). |
+| **Memoria a largo plazo** | Lo que persiste entre tareas (bases de datos, documentos, preferencias). |
+| **Instrucciones / system prompt** | Rol, reglas y límites definidos por quien construye el agente. |
+| **Multiagente** | Varios agentes especializados que colaboran. |
+| **Triaje / traspaso (*handoff*)** | Clasificar un pedido y pasarlo al agente adecuado. |
+| **Humano en el circuito** | Una persona revisa o aprueba ciertas acciones del agente. |
 
 ---
 
@@ -186,5 +511,6 @@ flowchart TD
 
 - DataCamp — curso *Introducción a los agentes de IA* (base de estas notas).
 - Wiesinger, J., Marlow, P. y Vuskovic, V. (s. f.). *Agents* (whitepaper de Google).
+- Yao, S. et al. (2022). *ReAct: Synergizing Reasoning and Acting in Language Models*.
 
-> Notas personales de estudio: el contenido está redactado con mis propias palabras y ejemplos.
+> Notas personales de estudio: el contenido está redactado con mis propias palabras, ejemplos y analogías.
